@@ -1,0 +1,77 @@
+#Instalar paquetes
+install.packages("tidyverse")
+install.packages("readxl")
+install.packages("readstata13")
+
+#Cargar paquetes
+library(tidyverse)
+library(readxl)
+library(readstata13)
+
+#Importar archivos csv
+tabla1 <- read_csv2("casen_pobreza.csv")
+
+tabla1
+
+#Importar archivos excel
+tabla2 <- read_excel("casen_ingresos.xlsx")
+
+tabla2
+
+#Importar archivo Stata (base de datos Casen)
+#Opcional: descargar base directamente desde R:
+download.file(url = "http://observatorio.ministeriodesarrollosocial.gob.cl/casen-multidimensional/casen/docs/Casen_2017_stata.dta.zip",
+              destfile = "Casen 2017.dta") #615.2 MB descomprimido
+
+casen <- read.dta13("Casen 2017.dta")
+
+casen %>% glimpse()
+
+casen %>%
+    select(region, sexo, pobreza) %>%
+    filter(sexo == "Hombre") %>%
+    filter(region == "Región de Valparaíso") %>%
+    count(pobreza) %>%
+    mutate(porcentaje = n / sum(n) * 100)
+
+
+
+casen %>%
+    select(region, sexo, pobreza) %>%
+    filter(region == "Región de Valparaíso") %>%
+    group_by(sexo) %>%
+    count(pobreza) %>%
+    ungroup() %>%
+    mutate(porcentaje = n / sum(n) * 100)
+
+
+
+
+casen %>% glimpse()
+
+
+casen %>%
+    group_by(region) %>%
+    summarize(promedio = mean(ytotcor, na.rm = TRUE),
+              mediana = median(ytotcor, na.rm = TRUE),
+              promedio_h = mean(ytotcorh, na.rm = TRUE),
+              mediana_h = median(ytotcorh, na.rm = TRUE),
+              pensiones = mean(y2603c, na.rm = TRUE)) %>%
+    arrange(mediana)
+
+
+cifras <- casen %>%
+    group_by(sexo) %>%
+    summarize(promedio = mean(ytotcor, na.rm = TRUE),
+              mediana = median(ytotcor, na.rm = TRUE),
+              promedio_h = mean(ytotcorh, na.rm = TRUE),
+              mediana_h = median(ytotcorh, na.rm = TRUE),
+              pensiones = mean(y2603c, na.rm = TRUE)) %>%
+    arrange(mediana)
+
+
+cifras %>%
+    pivot_longer(2:6) %>%
+    pivot_wider(names_from = sexo) %>%
+    mutate(diferencia = Mujer - Hombre)
+
