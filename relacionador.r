@@ -41,19 +41,19 @@ casen_2 <- tidyr::uncount(casen_1, weights = expc)
 #calcular medidas de tendencia central
 casen_promedios <- casen_2 %>%
   group_by(comuna) %>%
-  summarize(across(3:13, ~ mean(.x, na.rm = TRUE))) %>%
+  summarize(across(2:13, ~ mean(.x, na.rm = TRUE))) %>%
   mutate(tipo = "promedio")
 
 casen_medianas <- casen_2 %>%
   group_by(comuna) %>%
-  summarize(across(3:13, ~ median(.x, na.rm = TRUE))) %>%
+  summarize(across(2:13, ~ median(.x, na.rm = TRUE))) %>%
   mutate(tipo = "mediana")
 
 #unir datos
 casen_datos <- bind_rows(casen_promedios, casen_medianas) %>%
   arrange(comuna, tipo)
 
-casen_datos
+glimpse(casen_datos)
 
 #limpiar
 remove(casen, casen_rm, casen_1, casen_2)
@@ -85,7 +85,7 @@ aes_mapping <- aes_string(
 min(casen_datos$s4)
 
 casen_datos %>%
-  pivot_wider(names_from = tipo, values_from = 2:12) %>%
+  tidyr::pivot_wider(names_from = tipo, values_from = 2:12) %>%
   select(comuna, 
          paste(variable_x, tipo_elegido_x, sep="_"), 
          paste(variable_y, tipo_elegido_y, sep="_"),
@@ -99,6 +99,7 @@ casen_datos %>%
   ggplot(mapping = aes_mapping) +
   geom_point(col= "white") +
   geom_point(alpha=0.5) +
+  ggrepel::geom_text_repel(aes(label = comuna), size= 4) +
   scale_size(range = c(3, 9)) +
   fishualize::scale_color_fish(option = "Bodianus_pulchellus", discrete = TRUE) +
   theme_light() +
@@ -112,6 +113,6 @@ casen_datos %>%
         legend.text = element_text(color= "gray60", size=8),
         legend.title = element_text(color= "gray60", face = "bold", size=9),
         axis.title = element_text(color= "gray60", face = "bold", size=9)) +
-  guides(size = guide_legend(override.aes = list(color="gray60", size=c(3, 5))),
+  guides(size = guide_legend(override.aes = list(color="gray60")),
          col = guide_legend(override.aes = list(size=4)))
   

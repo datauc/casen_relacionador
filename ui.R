@@ -1,20 +1,7 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
-library(shiny)
-library(shinyWidgets)
-
-# Define UI for application that draws a histogram
 shinyUI(fluidPage(
     
     # Application title
-    titlePanel("Relacionador"),
+    titlePanel("Relacionador Casen"),
     
     fluidRow(
         column(12,
@@ -98,7 +85,9 @@ shinyUI(fluidPage(
     
     fluidRow(    
         column(12,
-               plotOutput("grafico")
+               br(),
+               #textOutput("alerta_repetidas"),br(),
+               plotOutput("grafico", height = "640px")
         )
     )
     
