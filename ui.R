@@ -1,13 +1,50 @@
 shinyUI(fluidPage(
     
-    # Application title
-    titlePanel("Relacionador Casen"),
+    titlePanel(title = NULL,
+               windowTitle = "Relacionador Casen"),
     
+    #tipografías
+    tags$style(HTML("@import url('//fonts.googleapis.com/css?family=Open Sans');")), # Importar Open Sans
+    
+    #título ----
     fluidRow(
+        column(12,
+               h1("Relacionador Casen"),
+               p("Esta herramienta permite relacionar datos socioeconómicos cuantitativos de la encuesta Casen 2017."),
+               p("Utilice los botones presentados a continuación para seleccionar las variables que le interesa graficar."),
+        #Por ejemplo, seleccionar 'Mujeres' y 'Pobreza extrema' resultará en la cantidad de población que corresponde a dicho grupo social, junto a otros datos tales como sus ingresos."),
+               hr(),
+        )
+    ),
+    
+    #selectores ----
+    fluidRow(
+        #eje x
+        column(12,
+               column(8,
+                      selectizeInput("selector_x",
+                                     label = "Variable para el eje horizontal",
+                                     width = "100%",
+                                     choices = NULL
+                                     #choices = c("primera variable" = "1",
+                                     #               "segunda variable" = "2")
+                      ),
+               ),
+               column(4,
+                      selectizeInput("tipo_elegido_x",
+                                     label = "Medida del dato del eje horizontal",
+                                     width = "100%",
+                                     choices = c("Promedios" = "promedio",
+                                                 "Medianas" = "mediana")
+                      )
+               )
+               
+        ),
+        #eje y
         column(12,
                column(8,
                selectizeInput("selector_y",
-                              label = "seleccione la variable para el eje y",
+                              label = "Variable para el eje vertical",
                               width = "100%",
                               choices = NULL
                               #choices = c("primera variable" = "1",
@@ -16,7 +53,7 @@ shinyUI(fluidPage(
                ),
                column(4,
                selectizeInput("tipo_elegido_y",
-                              label = "seleccione la medida del dato del eje y",
+                              label = "Medida del dato del eje horizontal",
                               width = "100%",
                               choices = c("Promedios" = "promedio",
                                           "Medianas" = "mediana")
@@ -24,31 +61,11 @@ shinyUI(fluidPage(
                )
         ),
         
-        column(12,
-               column(8,
-               selectizeInput("selector_x",
-                              label = "seleccione la variable para el eje x",
-                              width = "100%",
-                              choices = NULL
-                              #choices = c("primera variable" = "1",
-                              #               "segunda variable" = "2")
-               ),
-               ),
-               column(4,
-               selectizeInput("tipo_elegido_x",
-                              label = "seleccione la medida del dato del eje x",
-                              width = "100%",
-                              choices = c("Promedios" = "promedio",
-                                          "Medianas" = "mediana")
-               )
-               )
-               
-        ),
-        
+        #tamaño
         column(12,
                column(8,
                selectizeInput("selector_size",
-                              label = "seleccione la variable para el tamaño",
+                              label = "Variable para el tamaño",
                               width = "100%",
                               choices = NULL
                               #choices = c("primera variable" = "1",
@@ -58,7 +75,7 @@ shinyUI(fluidPage(
                column(4,
                
                selectizeInput("tipo_elegido_size",
-                              label = "seleccione la medida del tamaño",
+                              label = "Medida del tamaño",
                               width = "100%",
                               choices = c("Promedios" = "promedio",
                                           "Medianas" = "mediana")
@@ -67,10 +84,11 @@ shinyUI(fluidPage(
                
         ),
         
+        #comunas
         column(12,
                column(12,
                pickerInput("selector_comunas",
-                           label = "seleccione las comunas que desea graficar",
+                           label = "Comunas que desea graficar",
                            width = "100%",
                            multiple = TRUE,
                            choices = NULL
@@ -79,16 +97,40 @@ shinyUI(fluidPage(
                
         )
     ),
-    
-    # textOutput("selector_y"),
-    # textOutput("selector_x"),
-    
+
+    #gráfico ----
     fluidRow(    
         column(12,
                br(),
-               #textOutput("alerta_repetidas"),br(),
-               plotOutput("grafico", height = "640px")
+               hr(),
+               plotOutput("grafico", height = "640px") %>% shinycssloaders::withSpinner()
         )
-    )
+    ),
+    
+    #footer ----
+    fluidRow(
+        column(12, align = "center",
+               
+               hr(),
+               p("Plataforma desarrollada por el equipo DATA UC, usando R Shiny"),
+
+               HTML("<p>Diseño y desarrollo: 
+                    <a href='http://bastian.olea.biz' 
+                       style='color: #999999'>
+                    Bastián Olea Herrera.</a></p>"),
+               
+               p("Facultad de Matemáticas"),
+               p("Pontificia Universidad Católica de Chile"),
+               tags$a(img(
+                   src = "logodatauc.png",
+                   width = 200, style = "padding: 10px"
+                   ),
+               #href = "http://www.mat.uc.cl"
+               hreg = "http://datascience.uc.cl"
+               )
+               
+               
+        )) #end footer
+               
     
 ))

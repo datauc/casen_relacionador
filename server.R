@@ -3,6 +3,9 @@ shinyServer(function(input, output, session) {
     output$selector_y <- renderText({ input$selector_y })
     output$selector_x <- renderText({ input$selector_x })
     
+    #actualizar selectores ----
+    #pone la lista de variables en cada selector
+    
     updateSelectizeInput(session,
                          inputId = "selector_y",
                          #choices = variables,
@@ -22,15 +25,48 @@ shinyServer(function(input, output, session) {
                          selected = sample(variables, 1)
     )
     
+    #pone las comunas en el selector de comunas
     updatePickerInput(session,
                          inputId = "selector_comunas",
                          choices = casen_datos %>% select(comuna) %>% distinct() %>% pull() %>% as.character(),
                       selected = c("La Florida", "Puente Alto", "La Cisterna", "Cerrillos", "Ñuñoa", "Vitacura", "Providencia")
     )
-
     
+    #actualiza los selectores de tipo para poner "no aplica" en las variables que no tienen mediana (las de conteo)
+    observeEvent(input$selector_x, {
+    if(input$selector_x %in% variables_conteo) {
+        updateSelectInput(session,
+                             inputId = "tipo_elegido_x",
+                             choices = c("No aplica" = "promedio"),
+                             selected = c("No aplica" = "promedio"))
+    }
+    })
+    
+    observeEvent(input$selector_y, {
+        if(input$selector_y %in% variables_conteo) {
+            updateSelectInput(session,
+                              inputId = "tipo_elegido_y",
+                              choices = c("No aplica" = "promedio"),
+                              selected = c("No aplica" = "promedio"))
+        }
+    })
+    
+    observeEvent(input$selector_size, {
+        if(input$selector_size %in% variables_conteo) {
+            updateSelectInput(session,
+                              inputId = "tipo_elegido_size",
+                              choices = c("No aplica" = "promedio"),
+                              selected = c("No aplica" = "promedio"))
+        }
+    })
+
+    #gráfico ----
     output$grafico <- renderPlot({
         
+        req(casen_datos)
+        req(input$selector_y)
+        
+        #variables del gráfico ----
         variable_y = input$selector_y #"ytotcorh"
         variable_x = input$selector_x #"numper"
         variable_col = "comuna"
@@ -42,6 +78,7 @@ shinyServer(function(input, output, session) {
         tipo_elegido_y = input$tipo_elegido_y #"promedio"
         tipo_elegido_size = input$tipo_elegido_size #"mediana"
         
+        #estética ----
         aes_mapping <- aes_string(
             x = variable_x,
             y = variable_y,
@@ -49,28 +86,42 @@ shinyServer(function(input, output, session) {
             size = variable_size
         )
         
+        #ggplot ----
         p <- casen_datos %>%
-            tidyr::pivot_wider(names_from = tipo, values_from = 2:13) %>%
+            #crear columnas de promedio/mediana
+            tidyr::pivot_wider(names_from = tipo, values_from = 2:22) %>%
+            #seleccionar variables y tipos elegidos
             select(comuna, 
                    paste(variable_x, tipo_elegido_x, sep="_"), 
                    paste(variable_y, tipo_elegido_y, sep="_"),
                    all_of(variable_col),
                    paste(variable_size, tipo_elegido_size, sep="_")) %>%
-            #select(comuna, ends_with(tipo_elegido)) %>%
             rename_all(list(~ stringr::str_remove(., "_promedio"))) %>%
             rename_all(list(~ stringr::str_remove(., "_mediana"))) %>%
-            #filter(tipo == tipo_elegido) %>%
+            #filtrar comunas
             filter(comuna %in% comunas_elegidas) %>%
+            #graficar
             ggplot(mapping = aes_mapping) +
             geom_point(col= "white") +
-            geom_point(alpha=0.5) +
+            geom_point(alpha=0.7) +
             ggrepel::geom_text_repel(aes(label = comuna), 
-                                     size = 4, point.padding = 1,
+                                     size = 5, point.padding = 1,
                                      min.segment.length = 2,
                                      show.legend = FALSE) +
-            scale_size(range = c(6, 20)) +
+            #escalas
+            scale_size(range = c(6, 20),
+                       labels = function(x) format(x, big.mark = ".", decimal.mark = ",")) +
+            scale_y_continuous(labels = function(x) format(x, big.mark = ".", decimal.mark = ",")) +
+            scale_x_continuous(labels = function(x) format(x, big.mark = ".", decimal.mark = ",")) +
+            #viridis::scale_color_viridis(discrete = TRUE, option = "magma") +
+            #fishualize::scale_color_fish(option = "Oncorhynchus_tshawytscha", discrete = TRUE) +
+            rcartocolor::scale_color_carto_d(type = "qualitative", 
+                                             #palette = "Sunset"
+                                             #palette = "Vivid"
+                                             palette = "Pastel"
+                                             ) +
             coord_cartesian(clip = "off") +
-            fishualize::scale_color_fish(option = "Bodianus_pulchellus", discrete = TRUE) +
+            #tema
             theme_light(base_size = 18) +
             theme(legend.position = "right") +
             theme(axis.line = element_line(size = 1, color = "gray40", lineend = "round"),
@@ -78,12 +129,18 @@ shinyServer(function(input, output, session) {
                   panel.grid.major = element_line(size=0.5, color="gray80"),
                   panel.grid.minor = element_blank(),
                   panel.border = element_blank(),
-                  axis.text = element_text(color= "gray60", size=11),
-                  legend.text = element_text(color= "gray60", size=12),
-                  legend.title = element_text(color= "gray60", face = "bold", size=13),
-                  axis.title = element_text(color= "gray60", face = "bold", size=13)) +
-            guides(size = guide_legend(override.aes = list(color="gray60")),
-                   col = guide_legend(override.aes = list(size=4)))
+                  axis.text = element_text(color= "gray60", size=13),
+                  legend.text = element_text(color= "gray60", size = 13),
+                  legend.title = element_text(color= "gray60", face = "bold", size = 14),
+                  axis.title = element_text(color= "gray60", face = "bold", size = 14)) +
+            guides(size = guide_legend(override.aes = list(color = "gray60")),
+                   col = guide_legend(override.aes = list(size = 6))) +
+            #etiquetas
+            labs(y = names(variables)[variables == variable_y], #obtener del vector nombrado
+                 x = names(variables)[variables == variable_x],
+                 col = "Comunas",
+                 size = names(variables)[variables == variable_size]
+            )
         
         return(p)
         
